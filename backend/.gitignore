@@ -1,0 +1,11 @@
+# .gitignore for backend
+venv/
+.env
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.env.*
+# Exclude any key or secret files
+*key*
+*secret*

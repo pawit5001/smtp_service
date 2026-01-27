@@ -1,108 +1,87 @@
-# SMTP Email Sender Project
+# SMTP Email Sender Service
 
-This project is a full-stack application for sending SMTP emails. It consists of a backend built with FastAPI, a frontend developed using React with TypeScript, and a Node.js server for handling requests.
+A full-stack project for sending emails via SMTP with a customizable sender name, built with FastAPI (Python backend) and React (frontend).
 
-## Project Structure
+## Features
+- Send emails with custom subject, body, and sender display name
+- API secured with API Key
+- Frontend form for easy email sending
+- Ready for deployment (Render, Railway, etc.)
 
-```
-smtp-email-sender
-├── backend
-│   ├── app
-│   │   ├── main.py
-│   │   ├── email_utils.py
-│   │   ├── models.py
-│   │   └── predefined_messages.py
-│   ├── requirements.txt
-│   └── README.md
-├── frontend
-│   ├── public
-│   │   └── index.html
-│   ├── src
-│   │   ├── App.tsx
-│   │   ├── index.tsx
-│   │   ├── components
-│   │   │   ├── MessageForm.tsx
-│   │   │   └── PredefinedMessages.tsx
-│   │   ├── pages
-│   │   │   └── Home.tsx
-│   │   ├── styles
-│   │   │   └── tailwind.css
-│   │   └── types
-│   │       └── index.ts
-│   ├── package.json
-│   ├── tailwind.config.js
-│   ├── tsconfig.json
-│   └── README.md
-├── node-server
-│   ├── src
-│   │   └── server.js
-│   ├── package.json
-│   └── README.md
-└── README.md
-```
+## Backend (FastAPI)
+- Location: `backend/`
+- Install dependencies:
+  ```bash
+  pip install -r requirements.txt
+  ```
+- Run locally:
+  ```bash
+  uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
+  ```
+- API docs: [http://localhost:8000/docs](http://localhost:8000/docs)
 
-## Backend
+## Frontend (React)
+- Location: `frontend/`
+- Install dependencies:
+  ```bash
+  cd frontend
+  npm install
+  ```
+- Run locally:
+  ```bash
+  npm start
+  ```
 
-The backend is implemented using FastAPI and is responsible for handling email requests. It includes:
 
-- **main.py**: Entry point for the FastAPI application, setting up routes for sending emails.
-- **email_utils.py**: Contains utility functions for sending SMTP emails.
-- **models.py**: Defines data models for email requests.
-- **predefined_messages.py**: Exports predefined messages for account verification and reset codes.
-- **requirements.txt**: Lists the required Python dependencies.
 
-### Setup Instructions
+## API Documentation
 
-1. Navigate to the `backend` directory.
-2. Install the required packages using pip:
-   ```
-   pip install -r requirements.txt
-   ```
-3. Run the FastAPI application:
-   ```
-   uvicorn app.main:app --reload
-   ```
+### Send Email
+- **Endpoint:** `POST /send-email/`
+- **Headers:**
+  - `Authorization: Bearer <API_KEY>`
+  - `Content-Type: application/json`
+- **Request Body:**
+  ```json
+  {
+    "display_name": "admin_snaptranslate",
+    "recipient": "user@example.com",
+    "subject": "Test",
+    "body": "Hello"
+  }
+  ```
+- **Response:**
+  - Success: `200 OK` `{ "message": "Email sent successfully" }`
+  - Error: `400`/`500` with error message
 
-## Frontend
+### Read Emails
+- **Endpoint:** `GET /read-emails`
+- **Headers:**
+  - `Authorization: Bearer <API_KEY>`
+- **Response:**
+  - Success: `200 OK` with JSON:
+    ```json
+    {
+      "emails": [
+        {
+          "subject": "...",
+          "from": "...",
+          "date": "...",
+          "body_text": "..."
+          // ...other fields
+        }
+      ]
+    }
+    ```
+  - Error: `401`/`500` with error message
 
-The frontend is built with React and TypeScript, styled using Tailwind CSS. It includes:
+You can also explore and test the API interactively at `/docs` (Swagger UI) when the backend is running.
 
-- **App.tsx**: Main component that sets up routing and layout.
-- **MessageForm.tsx**: Component for users to write their own messages.
-- **PredefinedMessages.tsx**: Component for selecting predefined messages.
-- **Home.tsx**: Home page that includes both components.
+## Deployment
+- Push your code to GitHub
+- Deploy backend to Render, Railway, or similar (free tier available)
+- Set environment variables for credentials and API key
+- Share your public API URL and API key with trusted users
 
-### Setup Instructions
-
-1. Navigate to the `frontend` directory.
-2. Install the required packages using npm:
-   ```
-   npm install
-   ```
-3. Start the React application:
-   ```
-   npm start
-   ```
-
-## Node.js Server
-
-The Node.js server can be used to proxy requests or serve static files. It includes:
-
-- **server.js**: Sets up a simple Node.js server.
-- **package.json**: Lists dependencies and scripts.
-
-### Setup Instructions
-
-1. Navigate to the `node-server` directory.
-2. Install the required packages using npm:
-   ```
-   npm install
-   ```
-3. Start the Node.js server:
-   ```
-   node src/server.js
-   ```
-
-## Conclusion
-
-This project provides a complete solution for sending SMTP emails with customizable messages. Follow the setup instructions for each part of the application to get started.
+## License
+MIT
