@@ -45,14 +45,20 @@ A free, open-source full-stack project for sending emails via SMTP with a custom
 ### Environment Variables (backend/.env)
 Create a `.env` file in the `backend/` directory with the following (example):
 ```
-SMTP_SERVER=smtp.gmail.com
+SMTP_CREDENTIALS=your_email@outlook.com:your_password_or_xxx:your_refresh_token:your_client_id
+SMTP_SERVER=smtp.office365.com
 SMTP_PORT=587
-SMTP_USERNAME=your_email@gmail.com
-SMTP_PASSWORD=your_app_password
 API_KEY=your_api_key_here
 ```
 
+**Note:**
+- This project is configured for Microsoft 365/Outlook (smtp.office365.com) only.
+- You must use OAuth2 credentials (refresh_token, client_id) for secure authentication.
+- Do not use Gmail or other providers.
+```
+
 ## Frontend (React)
+* Make sure you have Microsoft 365/Outlook credentials and have registered your app for OAuth2 to obtain refresh_token and client_id.
 - Location: `frontend/`
 - Install dependencies: `npm install`
 - Run locally: `npm start`
@@ -140,18 +146,7 @@ You can also explore and test the API interactively at `/docs` (Swagger UI) when
 
 ---
 
-## 🌐 Public Demo Endpoint (Optional)
-If you deploy your backend, add your public API URL here for others to try:
 
-```
-API Base URL: https://your-app.onrender.com
-API Key: <demo or test key>
-```
-
----
-
-## Contributing
-Pull requests and issues are welcome! Please open an issue to discuss your ideas or report bugs.
-
+ 
 ## License
 MIT
