@@ -8,14 +8,14 @@ from email.header import decode_header
 from fastapi import FastAPI, HTTPException, Request, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from starlette.middleware.base import BaseHTTPMiddleware
-from app.routes_send import router_send
-from app.routes_read import router_read
+from backend.app.routes_send import router_send
+from backend.app.routes_read import router_read
 
 
 
 
 # --- API Key Auth ---
-from app.auth_utils import api_key_auth
+from backend.app.auth_utils import api_key_auth
 
 
 # Ensure logs are flushed to the console

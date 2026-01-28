@@ -1,8 +1,8 @@
 import logging
 from fastapi import APIRouter, HTTPException
-from app.email_utils import send_email
+from backend.app.email_utils import send_email
 from pydantic import BaseModel
-from app.auth_utils import api_key_auth
+from backend.app.auth_utils import api_key_auth
 from fastapi import Depends
 
 router_send = APIRouter(

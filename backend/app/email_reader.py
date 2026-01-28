@@ -8,7 +8,7 @@ import asyncio
 from functools import lru_cache
 import ssl
 
-from app.email_utils import get_env_credentials
+from backend.app.email_utils import get_env_credentials
 
 def get_oauth2_access_token(refresh_token, client_id, client_secret=None):
     data = {

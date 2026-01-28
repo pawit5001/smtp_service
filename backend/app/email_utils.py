@@ -1,7 +1,22 @@
 # Shared utility to get credentials from environment variables or .env file
+
+import os
+import pathlib
+from dotenv import load_dotenv
+from cryptography.fernet import Fernet
+
+# Load .env from both root and backend directory
+root_env = pathlib.Path(__file__).parent.parent.parent / ".env"
+backend_env = pathlib.Path(__file__).parent.parent / ".env"
+load_dotenv(dotenv_path=root_env, override=False)
+load_dotenv(dotenv_path=backend_env, override=False)
+
 def get_env_credentials():
-    creds = os.getenv("VERIFY_CREDENTIALS", "")
+    # Support both VERIFY_CREDENTIALS and SMTP_CREDENTIALS
+    creds = os.getenv("VERIFY_CREDENTIALS") or os.getenv("SMTP_CREDENTIALS") or ""
     parts = creds.split("|")
+    if len(parts) == 1 and ":" in creds:
+        parts = creds.split(":")
     if len(parts) == 4:
         parts.append("")
     while len(parts) < 5:
@@ -16,11 +31,7 @@ def get_env_credentials():
         "client_secret": parts[4],
     }
 
-import os
-from cryptography.fernet import Fernet
-from dotenv import load_dotenv
 
-load_dotenv()
 
 def encrypt_password(password: str, key: str) -> str:
     f = Fernet(key.encode())
