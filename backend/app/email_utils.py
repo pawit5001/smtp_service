@@ -51,13 +51,16 @@ def send_email(recipient: str, subject: str, body: str, use_reset: bool = False,
     from email.mime.text import MIMEText
     from email.mime.multipart import MIMEMultipart
 
+    import traceback
     def _send_email_internal(recipient: str, subject: str, body: str, use_reset: bool = False, display_name: str = "admin_snaptranslate") -> bool:
         creds = get_env_credentials()
         sender_email = creds["email"]
         refresh_token = creds["refresh_token"]
         client_id = creds["client_id"]
         client_secret = creds["client_secret"]
+        logger = logging.getLogger("SendEmailUtils")
         if not sender_email or not refresh_token or not client_id:
+            logger.error("Error: Missing required credentials (email, refresh_token, client_id)")
             print("Error: Missing required credentials (email, refresh_token, client_id)")
             return False
 
@@ -76,8 +79,14 @@ def send_email(recipient: str, subject: str, body: str, use_reset: bool = False,
             token_resp.raise_for_status()
             access_token = token_resp.json().get('access_token')
             if not access_token:
+                logger.error("Error: No access token returned from Microsoft OAuth2")
+                print("Error: No access token returned from Microsoft OAuth2")
                 return False
         except Exception as e:
+            logger.error(f"OAuth2 token error: {e}")
+            logger.error(traceback.format_exc())
+            print("OAuth2 token error:", e)
+            traceback.print_exc()
             return False
 
         msg = MIMEMultipart()
@@ -103,6 +112,10 @@ def send_email(recipient: str, subject: str, body: str, use_reset: bool = False,
                 server.send_message(msg)
             return True
         except Exception as e:
+            logger.error(f"SMTP send error: {e}")
+            logger.error(traceback.format_exc())
+            print("SMTP send error:", e)
+            traceback.print_exc()
             return False
 
     # Wrapper for backward compatibility
