@@ -116,6 +116,40 @@ def send_email(recipient: str, subject: str, body: str, use_reset: bool = False,
             logger.error(traceback.format_exc())
             print("SMTP send error:", e)
             traceback.print_exc()
+            # Fallback: try Microsoft Graph API if SMTP fails due to network unreachable
+            if "Network is unreachable" in str(e):
+                logger.info("Trying fallback: Microsoft Graph API send mail...")
+                graph_url = "https://graph.microsoft.com/v1.0/me/sendMail"
+                graph_headers = {
+                    "Authorization": f"Bearer {access_token}",
+                    "Content-Type": "application/json"
+                }
+                graph_body = {
+                    "message": {
+                        "subject": subject,
+                        "body": {
+                            "contentType": "Text",
+                            "content": body + "\n\n------------------------------\nThis email was sent via SnapTranslate SMTP Service."
+                        },
+                        "toRecipients": [
+                            {"emailAddress": {"address": recipient}}
+                        ],
+                        "from": {"emailAddress": {"address": sender_email}},
+                        "sender": {"emailAddress": {"address": sender_email}}
+                    },
+                    "saveToSentItems": "true"
+                }
+                try:
+                    resp = requests.post(graph_url, headers=graph_headers, json=graph_body)
+                    resp.raise_for_status()
+                    logger.info("Graph API sendMail success!")
+                    return True
+                except Exception as ge:
+                    logger.error(f"Graph API sendMail error: {ge}")
+                    logger.error(traceback.format_exc())
+                    print("Graph API sendMail error:", ge)
+                    traceback.print_exc()
+                    return False
             return False
 
     # Wrapper for backward compatibility
