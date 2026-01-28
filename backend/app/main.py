@@ -15,9 +15,9 @@ from backend.app.routes_read import router_read
 
 
 # --- API Key Auth ---
-from app.routes_send import router_send
-from app.routes_read import router_read
-from app.auth_utils import api_key_auth
+from backend.app.routes_send import router_send
+from backend.app.routes_read import router_read
+from backend.app.auth_utils import api_key_auth
 
 # Ensure logs are flushed to the console
 import sys
