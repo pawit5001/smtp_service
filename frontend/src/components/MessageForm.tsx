@@ -13,7 +13,8 @@ const MessageForm: React.FC = () => {
         setStatus(null);
         setLoading(true);
         try {
-            const res = await fetch('http://localhost:8000/send-email/', {
+            const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:8000';
+            const res = await fetch(`${apiUrl}/send-email/`, {
                 method: 'POST',
                 headers: { 
                     'Content-Type': 'application/json',

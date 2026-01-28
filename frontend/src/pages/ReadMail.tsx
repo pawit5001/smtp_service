@@ -28,7 +28,8 @@ const ReadMail: React.FC = () => {
     setLoading(true);
     const fetchEmails = async () => {
       try {
-        const res = await fetch('http://localhost:8000/read-emails', {
+        const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:8000';
+        const res = await fetch(`${apiUrl}/read-emails`, {
           headers: {
             'Authorization': `Bearer ${process.env.REACT_APP_API_KEY}` // Use API key from .env
           }
