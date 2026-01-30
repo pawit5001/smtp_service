@@ -1,3 +1,9 @@
+@layer base {
+	html.dark, body.dark, html[class~="dark"], body[class~="dark"] {
+		background: #0f172a !important;
+		background-color: #0f172a !important;
+	}
+}
 @tailwind base;
 @tailwind components;
 @tailwind utilities;

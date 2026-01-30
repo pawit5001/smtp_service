@@ -1,3 +1,48 @@
+async def fetch_recent_emails_graph():
+    """Fetch the most recent emails from the inbox using Microsoft Graph API (OAuth2)."""
+    creds = get_env_credentials()
+    refresh_token = creds["refresh_token"]
+    client_id = creds["client_id"]
+    client_secret = creds["client_secret"]
+    # Get access token for Graph API
+    token_url = "https://login.microsoftonline.com/common/oauth2/v2.0/token"
+    payload = {
+        'client_id': client_id,
+        'scope': 'https://graph.microsoft.com/Mail.Read offline_access',
+        'refresh_token': refresh_token,
+        'grant_type': 'refresh_token',
+    }
+    if client_secret:
+        payload['client_secret'] = client_secret
+    resp = requests.post(token_url, data=payload)
+    resp.raise_for_status()
+    access_token = resp.json().get('access_token')
+    if not access_token:
+        raise Exception("No access token for Graph API")
+    # Fetch messages from Microsoft Graph API
+    graph_url = "https://graph.microsoft.com/v1.0/me/mailFolders/inbox/messages?$top=10&$orderby=receivedDateTime desc"
+    headers = {
+        "Authorization": f"Bearer {access_token}",
+        "Accept": "application/json"
+    }
+    r = requests.get(graph_url, headers=headers)
+    r.raise_for_status()
+    data = r.json()
+    emails = []
+    for msg in data.get("value", []):
+        # Try to get plain text body, fallback to html if needed
+        body_text = msg["body"].get("content") if msg["body"].get("contentType") == "text" else None
+        body_html = msg["body"].get("content") if msg["body"].get("contentType") == "html" else None
+        emails.append({
+            "subject": msg.get("subject", ""),
+            "from": msg.get("from", {}).get("emailAddress", {}).get("address", ""),
+            "date": msg.get("receivedDateTime", ""),
+            "body_text": body_text,
+            "body_html": body_html,
+            "headers": {},
+            "attachments": [],
+        })
+    return emails
 import os
 import logging
 import imaplib
@@ -9,6 +54,7 @@ from functools import lru_cache
 import ssl
 
 from backend.app.email_utils import get_env_credentials
+from backend.app.redis_cache import get_cached_emails, cache_emails
 
 def get_oauth2_access_token(refresh_token, client_id, client_secret=None):
     data = {
@@ -83,29 +129,44 @@ async def fetch_email(imap, num):
     finally:
         pass
 
-async def fetch_recent_emails():
-    """Fetch the most recent emails from the inbox using IMAP and OAuth2."""
-    creds = get_env_credentials()
+async def fetch_recent_emails(sort="desc", page=1, page_size=10, credentials=None):
+    """Fetch emails from the inbox using IMAP and OAuth2, with sorting and pagination."""
+    creds = get_env_credentials(credentials)
     email_addr = creds["email"]
+        # Redis cache disabled
     refresh_token = creds["refresh_token"]
     client_id = creds["client_id"]
     client_secret = creds["client_secret"]
     access_token = get_oauth2_access_token(refresh_token, client_id, client_secret)
     imap_host = "outlook.office365.com"
     imap = imaplib.IMAP4_SSL(imap_host)
-    imap_authenticate_xoauth2(imap, email_addr, access_token)
-    await asyncio.to_thread(imap.select, "INBOX")
-    typ, data = await asyncio.to_thread(imap.search, None, "ALL")
-    if typ != "OK":
-        return []
-    mail_ids = data[0].split()
-    latest_ids = mail_ids[-10:] if len(mail_ids) > 10 else mail_ids
-    emails = []
-    for num in reversed(latest_ids):
-        res = await fetch_email(imap, num)
-        emails.append(res)
-    await asyncio.to_thread(imap.logout)
-    # Log only subject of each email and total count
-    subjects = [e.get('subject') for e in emails]
-    logging.info("[ReadMail] status: OK")
-    return emails
+    try:
+        imap_authenticate_xoauth2(imap, email_addr, access_token)
+        await asyncio.to_thread(imap.select, "INBOX")
+        typ, data = await asyncio.to_thread(imap.search, None, "ALL")
+        if typ != "OK":
+            return []
+        mail_ids = data[0].split()
+        if sort == "asc":
+            mail_ids = mail_ids
+        else:
+            mail_ids = list(reversed(mail_ids))
+        # Pagination
+        start = (page - 1) * page_size
+        end = start + page_size
+        page_ids = mail_ids[start:end]
+        emails = []
+        for num in page_ids:
+            res = await fetch_email(imap, num)
+            emails.append(res)
+        logging.info(f"[ReadMail] status: OK, returned {len(emails)} emails (page {page})")
+            # Redis cache disabled
+        return emails
+    except Exception as e:
+        logging.error(f"[ReadMail][IMAP] {e}")
+        return [{"error": "เกิดข้อผิดพลาดในการเชื่อมต่อกล่องอีเมล กรุณาลองใหม่อีกครั้งหรือตรวจสอบการเชื่อมต่อ"}]
+    finally:
+        try:
+            await asyncio.to_thread(imap.logout)
+        except Exception:
+            pass

@@ -1,5 +1,11 @@
 import sys
 import os
+# --- Fix sys.path for local development ---
+current = os.path.dirname(os.path.abspath(__file__))
+parent = os.path.dirname(current)
+grandparent = os.path.dirname(parent)
+if grandparent not in sys.path:
+    sys.path.insert(0, grandparent)
 import logging
 import requests
 import imaplib
@@ -8,6 +14,7 @@ from email.header import decode_header
 from fastapi import FastAPI, HTTPException, Request, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from starlette.middleware.base import BaseHTTPMiddleware
+from backend.app.middleware_ratelimit import RateLimiterMiddleware
 from backend.app.routes_send import router_send
 from backend.app.routes_read import router_read
 
@@ -30,6 +37,9 @@ class LoggingMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request, call_next):
         response = await call_next(request)
         return response
+
+# เพิ่ม rate limiting (10 req/60s ต่อ endpoint ต่อ IP)
+app.add_middleware(RateLimiterMiddleware, max_requests=10, window_seconds=60)
 app.add_middleware(LoggingMiddleware)
 
 app.add_middleware(
