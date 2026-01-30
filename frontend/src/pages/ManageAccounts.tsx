@@ -24,10 +24,28 @@ const ManageAccounts: React.FC = () => {
     saveAccounts(newAccounts);
   }
 
+  function handleClearLocalStorage() {
+    if (window.confirm('คุณแน่ใจหรือไม่ว่าต้องการล้างข้อมูลทั้งหมดใน localStorage? (รวมถึงบัญชีที่เลือก, ฟอร์ม, ฯลฯ)')) {
+      localStorage.removeItem('messageform_selected_account_idx');
+      localStorage.removeItem('readmail_selected_account_idx');
+      localStorage.removeItem('message_form_cache');
+      // ถ้าต้องการลบบัญชีที่บันทึกไว้ด้วย (reset ทั้งหมด):
+      localStorage.removeItem('accounts');
+      window.location.reload();
+    }
+  }
   return (
     <div className="min-h-screen w-full flex items-center justify-center bg-gray-50 dark:bg-gray-900">
       <div className="w-full max-w-4xl px-4 py-6">
         <AddEmailAccount onAdd={handleAddAccount} accounts={accounts} />
+        <div className="mb-4 flex justify-end max-w-xl mx-auto">
+          <button
+            onClick={handleClearLocalStorage}
+            className="px-4 py-2 bg-yellow-100 dark:bg-yellow-800 text-yellow-700 dark:text-yellow-200 rounded border border-yellow-300 dark:border-yellow-700 text-sm font-semibold hover:bg-yellow-200 dark:hover:bg-yellow-700 transition-colors"
+          >
+            ล้างข้อมูล LocalStorage ทั้งหมด
+          </button>
+        </div>
         <div className="mb-8 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl shadow-sm p-6 max-w-xl mx-auto">
           <h3 className="font-bold mb-2 text-gray-900 dark:text-gray-100">บัญชีอีเมลที่เพิ่มไว้ <span className="font-normal text-sm text-gray-500 dark:text-gray-300">({accounts.length} บัญชี)</span></h3>
           {accounts.length === 0 ? (
