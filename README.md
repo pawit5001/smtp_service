@@ -1,12 +1,13 @@
 # SMTP Email Sender Service
 
 ## Overview
-This project is a self-hosted, open-source tool for sending emails via SMTP (Microsoft 365/Outlook) with a customizable sender name. It consists of a FastAPI backend and a React frontend.
+A self-hosted, open-source full-stack email sending platform supporting both Microsoft Graph API and SMTP (Microsoft 365/Outlook). Built with FastAPI (Python backend) and React (frontend).
 
 **Key Features:**
-- Send emails with custom subject, body, and sender display name
+- Send emails via either Microsoft Graph API (OAuth2) or classic SMTP
+- Custom subject, body, and sender display name
 - Secure with API Key (set by you)
-- User-friendly web frontend for sending emails
+- User-friendly web frontend for sending emails and managing accounts
 - Ready for local or cloud deployment (Render, Railway, etc.)
 
 ---
@@ -15,7 +16,7 @@ This project is a self-hosted, open-source tool for sending emails via SMTP (Mic
 
 ### 1. Clone the repository
 ```bash
-git clone https://github.com/yourusername/smtp-email-sender.git
+git clone https://github.com/pawit5001/smtp-email-sender.git
 cd smtp-email-sender
 ```
 
@@ -52,8 +53,8 @@ API_KEY=your_api_key_here
 ```
 
 **Note:**
-- This project is configured for Microsoft 365/Outlook (smtp.office365.com) only.
-- You must use OAuth2 credentials (refresh_token, client_id) for secure authentication.
+- This project is designed for Microsoft 365/Outlook (smtp.office365.com) only.
+- You must use OAuth2 credentials (refresh_token, client_id) for Graph API or SMTP with OAuth2.
 - Do not use Gmail or other providers.
 
 ### Frontend (`frontend/.env`)
@@ -68,9 +69,11 @@ REACT_APP_API_KEY=your_api_key_here
 ## Usage
 
 1. Open the frontend in your browser (usually [http://localhost:3000](http://localhost:3000))
-2. Fill in the email form: sender, recipient, subject, body, and (optionally) attachments
-3. Click "Send" to send your email via your configured Microsoft 365/Outlook account
-4. If there are errors (quota, spam, etc.), you will see a clear error message in the UI
+2. Add your Microsoft 365/Outlook account credentials in the Manage Accounts page
+3. Fill in the email form: sender, recipient, subject, body, and (optionally) attachments
+4. Choose sending method: Microsoft Graph API (OAuth2) or SMTP
+5. Click "Send" to send your email
+6. If there are errors (quota, spam, etc.), you will see a clear error message in the UI
 
 ---
 
