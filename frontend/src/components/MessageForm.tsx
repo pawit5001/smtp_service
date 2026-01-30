@@ -3,6 +3,15 @@ import { toast } from 'react-toastify';
 
 
 const MessageForm: React.FC = () => {
+    function handleClearLocalStorage() {
+        if (window.confirm('คุณแน่ใจหรือไม่ว่าต้องการล้างข้อมูลทั้งหมดใน localStorage? (รวมถึงบัญชีที่เลือก, ฟอร์ม, ฯลฯ)')) {
+            localStorage.removeItem('messageform_selected_account_idx');
+            localStorage.removeItem('readmail_selected_account_idx');
+            localStorage.removeItem('message_form_cache');
+            localStorage.removeItem('accounts');
+            window.location.href = "/";
+        }
+    }
         // Multi-account selection (load from local storage or crypto utils)
         // Preload default accounts (CREDS_SMTP, CREDS_GRAPH_API) if not present
         const DEFAULT_ACCOUNTS = [
@@ -203,6 +212,15 @@ const MessageForm: React.FC = () => {
     };
 
     return (
+        <>
+        <div className="mb-4 flex justify-end max-w-xl mx-auto">
+            <button
+                onClick={handleClearLocalStorage}
+                className="px-4 py-2 bg-yellow-100 dark:bg-yellow-800 text-yellow-700 dark:text-yellow-200 rounded border border-yellow-300 dark:border-yellow-700 text-sm font-semibold hover:bg-yellow-200 dark:hover:bg-yellow-700 transition-colors"
+            >
+                ล้างข้อมูล LocalStorage ทั้งหมด
+            </button>
+        </div>
         <form className="max-w-xl mx-auto bg-white dark:bg-gray-900 rounded-xl shadow-md p-6 flex flex-col gap-4" onSubmit={handleSubmit}>
             <div className="mb-2">
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">ส่งจากบัญชี</label>
@@ -338,7 +356,8 @@ const MessageForm: React.FC = () => {
                 {loading ? 'กำลังส่ง...' : 'ส่งอีเมล'}
             </button>
         </form>
-    );
+        </form>
+        </>
 }
 
 export default MessageForm;

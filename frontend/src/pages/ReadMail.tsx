@@ -256,9 +256,26 @@ const ReadMail: React.FC = () => {
     };
   }, [handleObserver]);
 
+  function handleClearLocalStorage() {
+    if (window.confirm('คุณแน่ใจหรือไม่ว่าต้องการล้างข้อมูลทั้งหมดใน localStorage? (รวมถึงบัญชีที่เลือก, ฟอร์ม, ฯลฯ)')) {
+      localStorage.removeItem('messageform_selected_account_idx');
+      localStorage.removeItem('readmail_selected_account_idx');
+      localStorage.removeItem('message_form_cache');
+      localStorage.removeItem('accounts');
+      window.location.href = "/";
+    }
+  }
   return (
     <div className="flex flex-col min-h-screen bg-gray-50 dark:bg-gray-900">
       <div className="max-w-4xl mx-auto w-full px-4 pt-4 pb-0">
+        <div className="mb-4 flex justify-end">
+          <button
+            onClick={handleClearLocalStorage}
+            className="px-4 py-2 bg-yellow-100 dark:bg-yellow-800 text-yellow-700 dark:text-yellow-200 rounded border border-yellow-300 dark:border-yellow-700 text-sm font-semibold hover:bg-yellow-200 dark:hover:bg-yellow-700 transition-colors"
+          >
+            ล้างข้อมูล LocalStorage ทั้งหมด
+          </button>
+        </div>
         <div className="mb-2 text-xs text-gray-600 dark:text-gray-200 bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded px-3 py-2">
           <span className="font-semibold text-gray-800 dark:text-gray-100">บัญชีที่ใช้ในการอ่านเมล:</span> {activeEmail} {["scavelli20322@outlook.com", "xvrifkhiss3889@hotmail.com"].includes(activeEmail || "") && <span className="text-blue-500 font-normal text-xs ml-1">(ค่าเริ่มต้น)</span>}
           <div className="mt-2">
