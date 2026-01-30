@@ -1,10 +1,11 @@
 {
   "name": "smtp-email-sender-frontend",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "private": true,
   "scripts": {
     "start": "react-scripts start",
-    "build": "react-scripts build",
+    "build": "cross-env REACT_APP_VERSION=%npm_package_version% react-scripts build",
+    "build:unix": "REACT_APP_VERSION=$npm_package_version react-scripts build",
     "test": "react-scripts test",
     "eject": "react-scripts eject"
   },
@@ -19,6 +20,7 @@
     "typescript": "^4.4.4"
   },
   "devDependencies": {
+    "cross-env": "^7.0.3",
     "@types/crypto-js": "^4.2.2",
     "@types/react": "^18.3.27",
     "@types/react-dom": "^18.3.7"

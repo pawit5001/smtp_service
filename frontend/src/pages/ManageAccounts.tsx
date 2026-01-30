@@ -31,7 +31,7 @@ const ManageAccounts: React.FC = () => {
       localStorage.removeItem('message_form_cache');
       // ถ้าต้องการลบบัญชีที่บันทึกไว้ด้วย (reset ทั้งหมด):
       localStorage.removeItem('accounts');
-      window.location.reload();
+      window.location.href = "/";
     }
   }
   return (
