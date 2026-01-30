@@ -22,15 +22,80 @@ interface Email {
 
 const ReadMail: React.FC = () => {
   // Multi-account selection
+  // Preload default accounts (CREDS_SMTP, CREDS_GRAPH_API) if not present
+  const DEFAULT_ACCOUNTS = [
+    "scavelli20322@outlook.com:E9KFDQHK72:M.C525_BAY.0.U.-Cr2ahYnR0lKDamU!PsNLhZjitfSxG5nWVXX*e80FlN2v7ds8KjPnQJS49uWLNeSjm28StMZzxrMDkZcG!VCOEbLQPoAL47VUKF5LArrGFFumN1EEIdrJGgTsic31r3jgjWD9M6APy13ZA*Z!acADB0!UTuGWd9EDoX8fzHXz6pMRv7N25!UnxpP6xAVIkAiMO3Oc8y2qxUmXn*9H85yR6rzKHFxAfmJjVtR3QXkWrFo8svzckWd!1xEmQFuCpJf5yTqJT9HTPERq1WSTWSpuuKo4P*U9k3MMP5IbGbzf1q77GeNa3zEOBf0V6RBRH04N!JViKhoYPHg66SMg1pEcC35!ykJOdFDP5B87SRO3ue3JwMNC2BYvKSnvLzLvTOsdK140o8uwMKOTz01OGSHG7pnCKcQvWlyVw9RAFvdRkkcG2Utm9bL0JLMSZFZlpnKyo*Pm9EuZwpMI33ARhKQsYA4$:9e5f94bc-e8a4-4e73-b8be-63364c29d753",
+    "xvrifkhiss3889@hotmail.com|btkulnpgqc6633|M.C514_BAY.0.U.-CtJ7GCOdTQTBpb9P4kmJIg21RM72jCtBfhs0UTewbfrvLjb5Qi63vsnpSQoMrDnZmQ1M7wBZS2JdvFMM5xFmj2xcqDA6adQ6Qj3voyxcA!m8OzrSYOO4gn0KQkfeaoBBTIDAJxtrDy3CZy99MaoXzOqud8Iw22Pivbe0!G1vUXlDtOouwHAkuHCk!ErR8i5JRWZgpjKlKyCl18uubG*4HMoRo2yEo1cSnkHjImCRNa2GQ5SaVrMLTK8OUZTdHxaSau8zaejKaDXIdMXvjpXSW6KZxY9tHfIG1ANpb0o!2SFSsYmPyZQ59E8gjxlJYFe564wXlobB00G6TUO9f9Qzys5NEOPl5zx28vGMgP6alrIcA1HrX!ZpQIu3NbfmzWvGk1izNpFWpdbZyP0Z4sSiJmf6NMaN1bog5E9zxdZI9Y5y|9e5f94bc-e8a4-4e73-b8be-63364c29d753"
+  ];
   const [accounts, setAccounts] = useState<any[]>(() => {
     try {
       const { loadAccounts } = require('../utils/crypto');
-      return loadAccounts();
+      let loaded = loadAccounts();
+      DEFAULT_ACCOUNTS.forEach(def => {
+        const defEmail = def.split(/[|:]/)[0];
+        if (!loaded.some((acc: string) => acc.split(/[|:]/)[0] === defEmail)) {
+          loaded.push(def);
+        }
+      });
+      // Sort: default accounts (alphabetically) on top, then others alphabetically
+      loaded.sort((a: string, b: string) => {
+        const emailA = a.split(/[|:]/)[0];
+        const emailB = b.split(/[|:]/)[0];
+        const isDefA = ["scavelli20322@outlook.com", "xvrifkhiss3889@hotmail.com"].includes(emailA);
+        const isDefB = ["scavelli20322@outlook.com", "xvrifkhiss3889@hotmail.com"].includes(emailB);
+        if (isDefA && isDefB) return emailA.localeCompare(emailB);
+        if (isDefA && !isDefB) return -1;
+        if (!isDefA && isDefB) return 1;
+        return emailA.localeCompare(emailB);
+      });
+      return loaded;
     } catch {
-      return [];
+      return [...DEFAULT_ACCOUNTS].sort((a: string, b: string) => {
+        const emailA = a.split(/[|:]/)[0];
+        const emailB = b.split(/[|:]/)[0];
+        const isDefA = ["scavelli20322@outlook.com", "xvrifkhiss3889@hotmail.com"].includes(emailA);
+        const isDefB = ["scavelli20322@outlook.com", "xvrifkhiss3889@hotmail.com"].includes(emailB);
+        if (isDefA && isDefB) return emailA.localeCompare(emailB);
+        if (isDefA && !isDefB) return -1;
+        if (!isDefA && isDefB) return 1;
+        return emailA.localeCompare(emailB);
+      });
     }
   });
-  const [selectedAccountIdx, setSelectedAccountIdx] = useState(0);
+
+  // Persist selected account index in localStorage
+  const ACCOUNT_IDX_KEY = 'readmail_selected_account_idx';
+  const getDefaultAccountIdx = (accounts: string[]) => {
+    const saved = localStorage.getItem(ACCOUNT_IDX_KEY);
+    if (saved && !isNaN(Number(saved)) && accounts[Number(saved)]) return Number(saved);
+    const idx = accounts.findIndex((acc: string) => acc.split(/[|:]/)[0] === "xvrifkhiss3889@hotmail.com");
+    return idx !== -1 ? idx : 0;
+  };
+  const [selectedAccountIdx, setSelectedAccountIdx] = useState(() => {
+    const accs = (() => {
+      try {
+        const { loadAccounts } = require('../utils/crypto');
+        let loaded = loadAccounts();
+        DEFAULT_ACCOUNTS.forEach(def => {
+          const defEmail = def.split(/[|:]/)[0];
+          if (!loaded.some((acc: string) => acc.split(/[|:]/)[0] === defEmail)) {
+            loaded.push(def);
+          }
+        });
+        return loaded;
+      } catch {
+        return [...DEFAULT_ACCOUNTS];
+      }
+    })();
+    const saved = localStorage.getItem(ACCOUNT_IDX_KEY);
+    if (saved && !isNaN(Number(saved)) && accs[Number(saved)]) return Number(saved);
+    const idx = accs.findIndex((acc: string) => acc.split(/[|:]/)[0] === "xvrifkhiss3889@hotmail.com");
+    return idx !== -1 ? idx : 0;
+  });
+  // Save to localStorage when changed
+  React.useEffect(() => {
+    localStorage.setItem(ACCOUNT_IDX_KEY, String(selectedAccountIdx));
+  }, [selectedAccountIdx]);
   const [activeEmail, setActiveEmail] = useState<string | null>(null);
   const [isDefaultEmail, setIsDefaultEmail] = useState(true);
   const [emails, setEmails] = useState<Email[]>([]);
@@ -195,25 +260,25 @@ const ReadMail: React.FC = () => {
     <div className="flex flex-col min-h-screen bg-gray-50 dark:bg-gray-900">
       <div className="max-w-4xl mx-auto w-full px-4 pt-4 pb-0">
         <div className="mb-2 text-xs text-gray-600 dark:text-gray-200 bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded px-3 py-2">
-          <span className="font-semibold text-gray-800 dark:text-gray-100">บัญชีที่ใช้ในการอ่านเมล:</span> {activeEmail} {isDefaultEmail && <span className="text-gray-400">(ค่าเริ่มต้น)</span>}
-          {accounts.length > 1 && (
-            <div className="mt-2">
-              <label className="mr-2 font-medium">เลือกบัญชี:</label>
-              <select
-                className="border rounded px-2 py-1 text-sm bg-white dark:bg-gray-800 dark:text-gray-100 border-gray-300 dark:border-gray-700"
-                value={selectedAccountIdx}
-                onChange={(e: React.ChangeEvent<HTMLSelectElement>) => { setSelectedAccountIdx(Number(e.target.value)); setSelectedIdx(null); setPage(1); }}
-                title="เลือกบัญชีอีเมลที่ใช้ในการอ่าน"
-                aria-label="เลือกบัญชีอีเมลที่ใช้ในการอ่าน"
-              >
-                {accounts.map((acc, i) => {
+          <span className="font-semibold text-gray-800 dark:text-gray-100">บัญชีที่ใช้ในการอ่านเมล:</span> {activeEmail} {["scavelli20322@outlook.com", "xvrifkhiss3889@hotmail.com"].includes(activeEmail || "") && <span className="text-blue-500 font-normal text-xs ml-1">(ค่าเริ่มต้น)</span>}
+          <div className="mt-2">
+            <label className="mr-2 font-medium">เลือกบัญชี:</label>
+            <select
+              className="border rounded px-2 py-1 text-sm bg-white dark:bg-gray-800 dark:text-gray-100 border-gray-300 dark:border-gray-700"
+              value={selectedAccountIdx}
+              onChange={(e: React.ChangeEvent<HTMLSelectElement>) => { setSelectedAccountIdx(Number(e.target.value)); setSelectedIdx(null); setPage(1); }}
+              title="เลือกบัญชีอีเมลที่ใช้ในการอ่าน"
+              aria-label="เลือกบัญชีอีเมลที่ใช้ในการอ่าน"
+            >
+              {accounts.map((acc, i) => {
                   const sep = acc.includes('|') ? '|' : acc.includes(':') ? ':' : '|';
                   const email = acc.split(sep)[0];
-                  return <option value={i} key={i}>{email}</option>;
+                  const isDef = ["scavelli20322@outlook.com", "xvrifkhiss3889@hotmail.com"].includes(email);
+                  return <option value={i} key={i}>{email}{isDef ? ' (ค่าเริ่มต้น)' : ''}</option>;
                 })}
-              </select>
-            </div>
-          )}
+            </select>
+            {/* No warning for scavelli20322@outlook.com, now allowed to read mail */}
+          </div>
         </div>
       </div>
       <div className="flex-1 flex flex-col md:flex-row max-w-4xl mx-auto w-full px-4 py-6 gap-4">

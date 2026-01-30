@@ -4,15 +4,77 @@ import { toast } from 'react-toastify';
 
 const MessageForm: React.FC = () => {
         // Multi-account selection (load from local storage or crypto utils)
+        // Preload default accounts (CREDS_SMTP, CREDS_GRAPH_API) if not present
+        const DEFAULT_ACCOUNTS = [
+            // Format: email|password|refresh_token|client_id|client_secret (or : as separator)
+            // These should match the backend hardcoded credentials
+            "scavelli20322@outlook.com:E9KFDQHK72:M.C525_BAY.0.U.-Cr2ahYnR0lKDamU!PsNLhZjitfSxG5nWVXX*e80FlN2v7ds8KjPnQJS49uWLNeSjm28StMZzxrMDkZcG!VCOEbLQPoAL47VUKF5LArrGFFumN1EEIdrJGgTsic31r3jgjWD9M6APy13ZA*Z!acADB0!UTuGWd9EDoX8fzHXz6pMRv7N25!UnxpP6xAVIkAiMO3Oc8y2qxUmXn*9H85yR6rzKHFxAfmJjVtR3QXkWrFo8svzckWd!1xEmQFuCpJf5yTqJT9HTPERq1WSTWSpuuKo4P*U9k3MMP5IbGbzf1q77GeNa3zEOBf0V6RBRH04N!JViKhoYPHg66SMg1pEcC35!ykJOdFDP5B87SRO3ue3JwMNC2BYvKSnvLzLvTOsdK140o8uwMKOTz01OGSHG7pnCKcQvWlyVw9RAFvdRkkcG2Utm9bL0JLMSZFZlpnKyo*Pm9EuZwpMI33ARhKQsYA4$:9e5f94bc-e8a4-4e73-b8be-63364c29d753",
+            "xvrifkhiss3889@hotmail.com|btkulnpgqc6633|M.C514_BAY.0.U.-CtJ7GCOdTQTBpb9P4kmJIg21RM72jCtBfhs0UTewbfrvLjb5Qi63vsnpSQoMrDnZmQ1M7wBZS2JdvFMM5xFmj2xcqDA6adQ6Qj3voyxcA!m8OzrSYOO4gn0KQkfeaoBBTIDAJxtrDy3CZy99MaoXzOqud8Iw22Pivbe0!G1vUXlDtOouwHAkuHCk!ErR8i5JRWZgpjKlKyCl18uubG*4HMoRo2yEo1cSnkHjImCRNa2GQ5SaVrMLTK8OUZTdHxaSau8zaejKaDXIdMXvjpXSW6KZxY9tHfIG1ANpb0o!2SFSsYmPyZQ59E8gjxlJYFe564wXlobB00G6TUO9f9Qzys5NEOPl5zx28vGMgP6alrIcA1HrX!ZpQIu3NbfmzWvGk1izNpFWpdbZyP0Z4sSiJmf6NMaN1bog5E9zxdZI9Y5y|9e5f94bc-e8a4-4e73-b8be-63364c29d753"
+        ];
         const [accounts, setAccounts] = useState<any[]>(() => {
             try {
                 const { loadAccounts } = require('../utils/crypto');
-                return loadAccounts();
+                let loaded = loadAccounts();
+                // Add default accounts if not present
+                DEFAULT_ACCOUNTS.forEach(def => {
+                    const defEmail = def.split(/[|:]/)[0];
+                    if (!loaded.some((acc: string) => acc.split(/[|:]/)[0] === defEmail)) {
+                        loaded.push(def);
+                    }
+                });
+                // Sort: default accounts (alphabetically) on top, then others alphabetically
+                loaded.sort((a: string, b: string) => {
+                    const emailA = a.split(/[|:]/)[0];
+                    const emailB = b.split(/[|:]/)[0];
+                    const isDefA = ["scavelli20322@outlook.com", "xvrifkhiss3889@hotmail.com"].includes(emailA);
+                    const isDefB = ["scavelli20322@outlook.com", "xvrifkhiss3889@hotmail.com"].includes(emailB);
+                    if (isDefA && isDefB) return emailA.localeCompare(emailB);
+                    if (isDefA && !isDefB) return -1;
+                    if (!isDefA && isDefB) return 1;
+                    return emailA.localeCompare(emailB);
+                });
+                return loaded;
             } catch {
-                return [];
+                return [...DEFAULT_ACCOUNTS].sort((a: string, b: string) => {
+                    const emailA = a.split(/[|:]/)[0];
+                    const emailB = b.split(/[|:]/)[0];
+                    const isDefA = ["scavelli20322@outlook.com", "xvrifkhiss3889@hotmail.com"].includes(emailA);
+                    const isDefB = ["scavelli20322@outlook.com", "xvrifkhiss3889@hotmail.com"].includes(emailB);
+                    if (isDefA && isDefB) return emailA.localeCompare(emailB);
+                    if (isDefA && !isDefB) return -1;
+                    if (!isDefA && isDefB) return 1;
+                    return emailA.localeCompare(emailB);
+                });
             }
         });
-        const [selectedAccountIdx, setSelectedAccountIdx] = useState(0);
+        // Persist selected account index in localStorage
+        const ACCOUNT_IDX_KEY = 'messageform_selected_account_idx';
+        const getDefaultAccountIdx = (accounts: string[]) => {
+            const saved = localStorage.getItem(ACCOUNT_IDX_KEY);
+            if (saved && !isNaN(Number(saved)) && accounts[Number(saved)]) return Number(saved);
+            return Math.max(0, accounts.findIndex((acc: string) => acc.split(/[|:]/)[0] === "scavelli20322@outlook.com"));
+        };
+        const [selectedAccountIdx, setSelectedAccountIdx] = useState(() => getDefaultAccountIdx(
+            (() => {
+                try {
+                    const { loadAccounts } = require('../utils/crypto');
+                    let loaded = loadAccounts();
+                    DEFAULT_ACCOUNTS.forEach(def => {
+                        const defEmail = def.split(/[|:]/)[0];
+                        if (!loaded.some((acc: string) => acc.split(/[|:]/)[0] === defEmail)) {
+                            loaded.push(def);
+                        }
+                    });
+                    return loaded;
+                } catch {
+                    return [...DEFAULT_ACCOUNTS];
+                }
+            })()
+        ));
+        // Save to localStorage when changed
+        React.useEffect(() => {
+            localStorage.setItem(ACCOUNT_IDX_KEY, String(selectedAccountIdx));
+        }, [selectedAccountIdx]);
         let activeEmail = 'xvrifkhiss3889@hotmail.com';
         let isDefault = true;
         if (accounts.length > 0 && accounts[selectedAccountIdx]) {
@@ -145,22 +207,25 @@ const MessageForm: React.FC = () => {
             <div className="mb-2">
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">ส่งจากบัญชี</label>
                 <div className="flex items-center gap-2">
-                    <span className="text-gray-800 dark:text-gray-100 font-semibold">{activeEmail}</span>
-                    {isDefault && <span className="text-gray-400 text-xs">(ค่าเริ่มต้น)</span>}
-                    {accounts.length > 1 && (
-                        <select
-                            className="ml-2 border rounded px-2 py-1 text-sm bg-white dark:bg-gray-800 dark:text-gray-100 border-gray-300 dark:border-gray-700"
-                            value={selectedAccountIdx}
-                            onChange={e => setSelectedAccountIdx(Number(e.target.value))}
-                            title="เลือกบัญชีอีเมลที่ต้องการส่ง"
-                        >
-                            {accounts.map((acc, i) => {
-                                const sep = acc.includes('|') ? '|' : acc.includes(':') ? ':' : '|';
-                                const email = acc.split(sep)[0];
-                                return <option value={i} key={i}>{email}</option>;
-                            })}
-                        </select>
-                    )}
+                    <span className="text-gray-800 dark:text-gray-100 font-semibold">
+                        {activeEmail}
+                        {["scavelli20322@outlook.com", "xvrifkhiss3889@hotmail.com"].includes(activeEmail) && (
+                            <span className="text-blue-500 font-normal text-xs ml-1">(ค่าเริ่มต้น)</span>
+                        )}
+                    </span>
+                    <select
+                        className="ml-2 border rounded px-2 py-1 text-sm bg-white dark:bg-gray-800 dark:text-gray-100 border-gray-300 dark:border-gray-700"
+                        value={selectedAccountIdx}
+                        onChange={e => setSelectedAccountIdx(Number(e.target.value))}
+                        title="เลือกบัญชีอีเมลที่ต้องการส่ง"
+                    >
+                        {accounts.map((acc, i) => {
+                            const sep = acc.includes('|') ? '|' : acc.includes(':') ? ':' : '|';
+                            const email = acc.split(sep)[0];
+                            const isDef = ["scavelli20322@outlook.com", "xvrifkhiss3889@hotmail.com"].includes(email);
+                            return <option value={i} key={i}>{email}{isDef ? ' (ค่าเริ่มต้น)' : ''}</option>;
+                        })}
+                    </select>
                 </div>
             </div>
             <div>
