@@ -66,7 +66,11 @@ const MessageForm: React.FC = () => {
         }
         setLoading(true);
         try {
-            const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:8000';
+            // Auto-detect backend: if running on localhost, use local backend; otherwise use .env
+            let apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:8000';
+            if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+                apiUrl = 'http://localhost:8000';
+            }
             const userCred = accounts.length > 0 && accounts[selectedAccountIdx] ? accounts[selectedAccountIdx] : null;
             let res, data;
             // Always send as FormData for file/multi-value support

@@ -79,6 +79,7 @@ def send_email(recipient: str, subject: str, body: str, use_reset: bool = False,
             graph_payload['client_secret'] = client_secret
         graph_email = sender_email
         graph_token_resp = requests.post(graph_token_url, data=graph_payload)
+        print("[GraphAPI] Token response text:", graph_token_resp.text)
         graph_token_resp.raise_for_status()
         graph_access_token = graph_token_resp.json().get('access_token')
         if not graph_access_token:
@@ -205,10 +206,14 @@ def send_email(recipient: str, subject: str, body: str, use_reset: bool = False,
             server.send_message(msg)
         return True
     except Exception as e:
+        import smtplib
         logger.error(f"SMTP send error: {e}")
         logger.error(traceback.format_exc())
         print("SMTP send error:", e)
         traceback.print_exc()
+        # Special handling for OutboundSpamException
+        if isinstance(e, smtplib.SMTPDataError) and b'OutboundSpamException' in str(e).encode():
+            raise Exception("บัญชีอีเมลนี้ถูกจำกัดการส่งเมลออกโดย Microsoft (OutboundSpamException: RefuseQuota, ShowTierUpgrade) กรุณาเปลี่ยนบัญชีหรือรอให้ระบบปลดล็อก")
         return False
 
 def send_email_smtp(recipient: str, subject: str, body: str, use_reset: bool = False, display_name: str = "admin_snaptranslate", credentials: str = None, attachments=None, cc=None) -> bool:
@@ -303,8 +308,12 @@ def send_email_smtp(recipient: str, subject: str, body: str, use_reset: bool = F
             server.send_message(msg)
         return True
     except Exception as e:
+        import smtplib
         logger.error(f"SMTP send error: {e}")
         logger.error(traceback.format_exc())
         print("SMTP send error:", e)
         traceback.print_exc()
+        # Special handling for OutboundSpamException
+        if isinstance(e, smtplib.SMTPDataError) and b'OutboundSpamException' in str(e).encode():
+            raise Exception("บัญชีอีเมลนี้ถูกจำกัดการส่งเมลออกโดย Microsoft (OutboundSpamException: RefuseQuota, ShowTierUpgrade) กรุณาเปลี่ยนบัญชีหรือรอให้ระบบปลดล็อก")
         return False

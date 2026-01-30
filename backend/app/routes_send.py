@@ -56,9 +56,19 @@ async def send_email_form(
     credentials: str = Form(None),
     attachments: list[UploadFile] = File(None)
 ):
+
+    logger = logging.getLogger("SendMail")
+    logger.info(f"[SendMail] Request received: recipients={recipient}, cc={cc}, subject={subject}, display_name={display_name}, send_method={send_method}")
+    print(f"[SendMail] Request received: recipients={recipient}, cc={cc}, subject={subject}, display_name={display_name}, send_method={send_method}")
     results = []
+    from fastapi import HTTPException
     for rcpt in recipient:
         try:
+            logger.info(f"[SendMail] Sending to: {rcpt} using method: {send_method}")
+            try:
+                print(f"[SendMail] Sending to: {rcpt} using method: {send_method}")
+            except Exception:
+                pass
             if send_method == "smtp":
                 from backend.app.email_utils import send_email_smtp
                 ok = send_email_smtp(
@@ -83,9 +93,25 @@ async def send_email_form(
                     attachments=attachments,
                     cc=cc
                 )
+            logger.info(f"[SendMail] Result for {rcpt}: success={ok}")
+            try:
+                print(f"[SendMail] Result for {rcpt}: success={ok}")
+            except Exception:
+                pass
             results.append({"recipient": str(rcpt), "success": bool(ok)})
         except Exception as e:
-            logger = logging.getLogger("SendMail")
-            logger.error(f"Failed: {e}")
-            results.append({"recipient": str(rcpt), "success": False, "error": str(e)})
+            logger.error(f"[SendMail] Exception for {rcpt}: {e}")
+            logger.error(f"[SendMail] Traceback: {getattr(e, 'traceback', 'No traceback')}")
+            try:
+                print(f"[SendMail] Exception for {rcpt}: {e}")
+            except Exception:
+                pass
+            try:
+                import traceback as tb; print(tb.format_exc())
+            except Exception:
+                pass
+            # Return error message to frontend as HTTPException for known errors
+            raise HTTPException(status_code=400, detail=str(e))
+    logger.info(f"[SendMail] All results: {results}")
+    print(f"[SendMail] All results: {results}")
     return {"results": results}

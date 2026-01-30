@@ -31,6 +31,15 @@ import sys
 logging.basicConfig(level=logging.INFO, stream=sys.stdout, format='%(asctime)s - %(levelname)s - %(message)s', force=True, encoding='utf-8')
 app = FastAPI()
 
+# Print all endpoints on startup
+@app.on_event("startup")
+async def startup_event():
+    print("=== FastAPI Endpoints ===")
+    for route in app.routes:
+        if hasattr(route, "path"):
+            print(f"{route.path} [{','.join(route.methods)}]")
+    print("=========================")
+
 
 # Middleware log ทุก request
 class LoggingMiddleware(BaseHTTPMiddleware):
