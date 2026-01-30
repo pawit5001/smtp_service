@@ -10,13 +10,47 @@ backend_env = pathlib.Path(__file__).parent.parent / ".env"
 load_dotenv(dotenv_path=root_env, override=False)
 load_dotenv(dotenv_path=backend_env, override=False)
 
-def get_env_credentials(credentials: str = None):
+def get_env_credentials(credentials: str = None, sender: str = None, send_method: str = None):
     """
     Parse credentials string or environment variable into dict.
     Supports both | and : as separators. Returns dict with keys:
     email, password, refresh_token, client_id, client_secret
+    If credentials is None, will use SMTP_CREDENTIALS_SEND for sending, SMTP_CREDENTIALS for reading (legacy), or fallback.
     """
-    creds = credentials or os.getenv("SMTP_CREDENTIALS") or "xvrifkhiss3889@hotmail.com|btkulnpgqc6633|M.C514_BAY.0.U.-CtJ7GCOdTQTBpb9P4kmJIg21RM72jCtBfhs0UTewbfrvLjb5Qi63vsnpSQoMrDnZmQ1M7wBZS2JdvFMM5xFmj2xcqDA6adQ6Qj3voyxcA!m8OzrSYOO4gn0KQkfeaoBBTIDAJxtrDy3CZy99MaoXzOqud8Iw22Pivbe0!G1vUXlDtOouwHAkuHCk!ErR8i5JRWZgpjKlKyCl18uubG*4HMoRo2yEo1cSnkHjImCRNa2GQ5SaVrMLTK8OUZTdHxaSau8zaejKaDXIdMXvjpXSW6KZxY9tHfIG1ANpb0o!2SFSsYmPyZQ59E8gjxlJYFe564wXlobB00G6TUO9f9Qzys5NEOPl5zx28vGMgP6alrIcA1HrX!ZpQIu3NbfmzWvGk1izNpFWpdbZyP0Z4sSiJmf6NMaN1bog5E9zxdZI9Y5y|9e5f94bc-e8a4-4e73-b8be-63364c29d753"
+    # Hardcoded credentials for sending
+    CREDS_SCAVELLI = "scavelli20322@outlook.com:E9KFDQHK72:M.C525_BAY.0.U.-Cr2ahYnR0lKDamU!PsNLhZjitfSxG5nWVXX*e80FlN2v7ds8KjPnQJS49uWLNeSjm28StMZzxrMDkZcG!VCOEbLQPoAL47VUKF5LArrGFFumN1EEIdrJGgTsic31r3jgjWD9M6APy13ZA*Z!acADB0!UTuGWd9EDoX8fzHXz6pMRv7N25!UnxpP6xAVIkAiMO3Oc8y2qxUmXn*9H85yR6rzKHFxAfmJjVtR3QXkWrFo8svzckWd!1xEmQFuCpJf5yTqJT9HTPERq1WSTWSpuuKo4P*U9k3MMP5IbGbzf1q77GeNa3zEOBf0V6RBRH04N!JViKhoYPHg66SMg1pEcC35!ykJOdFDP5B87SRO3ue3JwMNC2BYvKSnvLzLvTOsdK140o8uwMKOTz01OGSHG7pnCKcQvWlyVw9RAFvdRkkcG2Utm9bL0JLMSZFZlpnKyo*Pm9EuZwpMI33ARhKQsYA4$:9e5f94bc-e8a4-4e73-b8be-63364c29d753"
+    CREDS_XVRI = "xvrifkhiss3889@hotmail.com|btkulnpgqc6633|M.C514_BAY.0.U.-CtJ7GCOdTQTBpb9P4kmJIg21RM72jCtBfhs0UTewbfrvLjb5Qi63vsnpSQoMrDnZmQ1M7wBZS2JdvFMM5xFmj2xcqDA6adQ6Qj3voyxcA!m8OzrSYOO4gn0KQkfeaoBBTIDAJxtrDy3CZy99MaoXzOqud8Iw22Pivbe0!G1vUXlDtOouwHAkuHCk!ErR8i5JRWZgpjKlKyCl18uubG*4HMoRo2yEo1cSnkHjImCRNa2GQ5SaVrMLTK8OUZTdHxaSau8zaejKaDXIdMXvjpXSW6KZxY9tHfIG1ANpb0o!2SFSsYmPyZQ59E8gjxlJYFe564wXlobB00G6TUO9f9Qzys5NEOPl5zx28vGMgP6alrIcA1HrX!ZpQIu3NbfmzWvGk1izNpFWpdbZyP0Z4sSiJmf6NMaN1bog5E9zxdZI9Y5y|9e5f94bc-e8a4-4e73-b8be-63364c29d753"
+    import logging
+    if credentials:
+        creds = credentials
+        logging.info(f"[get_env_credentials] Using explicit credentials param (len={len(creds)})")
+        print(f"[get_env_credentials] Using explicit credentials param (len={len(creds)})")
+    elif sender:
+        if sender.lower().startswith("scavelli"):
+            creds = CREDS_SCAVELLI
+            logging.info("[get_env_credentials] Using scavelli20322@outlook.com for send (explicit sender)")
+            print("[get_env_credentials] Using scavelli20322@outlook.com for send (explicit sender)")
+        elif sender.lower().startswith("xvrifkhiss3889"):
+            creds = CREDS_XVRI
+            logging.info("[get_env_credentials] Using xvrifkhiss3889@hotmail.com for send (explicit sender)")
+            print("[get_env_credentials] Using xvrifkhiss3889@hotmail.com for send (explicit sender)")
+        else:
+            creds = CREDS_SCAVELLI
+            logging.info("[get_env_credentials] Using scavelli20322@outlook.com for send (default fallback)")
+            print("[get_env_credentials] Using scavelli20322@outlook.com for send (default fallback)")
+    else:
+        # Detect if this is a send or read operation by call context
+        import inspect
+        stack = inspect.stack()
+        caller = stack[1].function if len(stack) > 1 else ""
+        if caller in ["send_email", "send_email_smtp"]:
+            creds = CREDS_SCAVELLI
+            logging.info("[get_env_credentials] Using scavelli20322@outlook.com for send (default)")
+            print("[get_env_credentials] Using scavelli20322@outlook.com for send (default)")
+        else:
+            creds = CREDS_XVRI
+            logging.info("[get_env_credentials] Using xvrifkhiss3889@hotmail.com for read (default)")
+            print("[get_env_credentials] Using xvrifkhiss3889@hotmail.com for read (default)")
     parts = creds.split("|")
     if len(parts) == 1 and ":" in creds:
         parts = creds.split(":")
@@ -46,10 +80,11 @@ def decrypt_password(token: str, key: str) -> str:
     f = Fernet(key.encode())
     return f.decrypt(token.encode()).decode()
 
-def send_email(recipient: str, subject: str, body: str, use_reset: bool = False, display_name: str = "admin_snaptranslate", credentials: str = None, attachments=None, cc=None) -> bool:
+def send_email(recipient: str, subject: str, body: str, use_reset: bool = False, display_name: str = "admin_snaptranslate", credentials: str = None, attachments=None, cc=None, sender: str = None, send_method: str = None) -> bool:
     """
     Send email using Microsoft Graph API (primary) or fallback to SMTP if Graph fails.
     Supports attachments and CC. Returns True if sent, False if error.
+    Uses SMTP_CREDENTIALS_SEND for sending by default (unless credentials is provided).
     """
     import logging
     import smtplib
@@ -60,7 +95,7 @@ def send_email(recipient: str, subject: str, body: str, use_reset: bool = False,
     import traceback
     preview_body = (body[:200] + '...') if len(body) > 200 else body
     logging.info("[SendMail] status: OK")
-    creds = get_env_credentials(credentials)
+    creds = get_env_credentials(credentials, sender=sender, send_method=send_method)
     sender_email = creds["email"]
     refresh_token = creds["refresh_token"]
     client_id = creds["client_id"]
@@ -219,6 +254,7 @@ def send_email(recipient: str, subject: str, body: str, use_reset: bool = False,
 def send_email_smtp(recipient: str, subject: str, body: str, use_reset: bool = False, display_name: str = "admin_snaptranslate", credentials: str = None, attachments=None, cc=None) -> bool:
     """
     Send email using SMTP only (no fallback). Supports attachments and CC. Returns True if sent, False if error.
+    Uses SMTP_CREDENTIALS_SEND for sending by default (unless credentials is provided).
     """
     import logging
     import smtplib

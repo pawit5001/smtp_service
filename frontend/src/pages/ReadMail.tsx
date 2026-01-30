@@ -73,7 +73,14 @@ const ReadMail: React.FC = () => {
       return;
     }
     setLoading(true);
-    const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:8000';
+    let apiUrl = process.env.REACT_APP_API_URL || '';
+    if (!apiUrl) {
+      if (window.location.hostname === '127.0.0.1') {
+        apiUrl = 'http://127.0.0.1:8000';
+      } else {
+        apiUrl = 'http://localhost:8000';
+      }
+    }
     const params = new URLSearchParams({
       sort,
       page: page.toString(),

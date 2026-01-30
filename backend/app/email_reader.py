@@ -131,9 +131,13 @@ async def fetch_email(imap, num):
 
 async def fetch_recent_emails(sort="desc", page=1, page_size=10, credentials=None):
     """Fetch emails from the inbox using IMAP and OAuth2, with sorting and pagination."""
+    import logging
+    print(f"[fetch_recent_emails] Called with sort={sort} page={page} page_size={page_size}")
+    logging.info(f"[fetch_recent_emails] Called with sort={sort} page={page} page_size={page_size}")
     creds = get_env_credentials(credentials)
+    print(f"[fetch_recent_emails] Using email: {creds['email']}")
+    logging.info(f"[fetch_recent_emails] Using email: {creds['email']}")
     email_addr = creds["email"]
-        # Redis cache disabled
     refresh_token = creds["refresh_token"]
     client_id = creds["client_id"]
     client_secret = creds["client_secret"]

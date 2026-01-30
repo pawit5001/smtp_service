@@ -66,10 +66,14 @@ const MessageForm: React.FC = () => {
         }
         setLoading(true);
         try {
-            // Auto-detect backend: if running on localhost, use local backend; otherwise use .env
-            let apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:8000';
-            if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
-                apiUrl = 'http://localhost:8000';
+            // Support both .env, localhost, and 127.0.0.1 for API URL
+            let apiUrl = process.env.REACT_APP_API_URL || '';
+            if (!apiUrl) {
+                if (window.location.hostname === '127.0.0.1') {
+                    apiUrl = 'http://127.0.0.1:8000';
+                } else {
+                    apiUrl = 'http://localhost:8000';
+                }
             }
             const userCred = accounts.length > 0 && accounts[selectedAccountIdx] ? accounts[selectedAccountIdx] : null;
             let res, data;
@@ -121,7 +125,14 @@ const MessageForm: React.FC = () => {
                     toast.error(`ส่งอีเมลไม่สำเร็จ ${failCount} รายการ: ${failList.join(', ')}`);
                 }
             } else {
-                toast.error(data.detail || 'เกิดข้อผิดพลาดในการส่งอีเมล');
+                // Special handling for Microsoft OAuth2/Graph API invalid_grant error
+                if (data && data.detail && typeof data.detail === 'string' && data.detail.includes('invalid_grant')) {
+                    toast.error('Token หมดอายุหรือสิทธิ์ไม่ถูกต้อง กรุณาเพิ่มบัญชีใหม่หรือ authorize ใหม่ใน Microsoft Azure Portal');
+                } else if (data && data.detail && typeof data.detail === 'string' && data.detail.includes('AADSTS70000')) {
+                    toast.error('Microsoft OAuth2: สิทธิ์ (scope) ไม่ถูกต้องหรือหมดอายุ กรุณา authorize ใหม่ใน Microsoft Azure Portal');
+                } else {
+                    toast.error(data.detail || 'เกิดข้อผิดพลาดในการส่งอีเมล');
+                }
             }
         } catch (err) {
             toast.error('เกิดข้อผิดพลาดในการเชื่อมต่อเซิร์ฟเวอร์');
