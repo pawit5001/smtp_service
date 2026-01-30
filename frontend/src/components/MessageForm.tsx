@@ -356,8 +356,8 @@ const MessageForm: React.FC = () => {
                 {loading ? 'กำลังส่ง...' : 'ส่งอีเมล'}
             </button>
         </form>
-            </form>
-        </React.Fragment>
+    </React.Fragment>
+    );
 }
 
 export default MessageForm;
