@@ -1,49 +1,49 @@
-
 # SMTP Email Sender Service
 
-A free, open-source full-stack project for sending emails via SMTP with a customizable sender name, built with FastAPI (Python backend) and React (frontend).
+## Overview
+This project is a self-hosted, open-source tool for sending emails via SMTP (Microsoft 365/Outlook) with a customizable sender name. It consists of a FastAPI backend and a React frontend.
 
----
-
-## 🚀 Quick Start
-
-1. **Clone the repository:**
-  ```bash
-  git clone https://github.com/yourusername/smtp-email-sender.git
-  cd smtp-email-sender
-  ```
-2. **Set up environment variables:**
-  - Copy `.env.example` to `.env` in both `backend/` and `frontend/` (see below for details).
-3. **Install dependencies and run:**
-  - Backend:
-    ```bash
-    cd backend
-    pip install -r requirements.txt
-    uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
-    ```
-  - Frontend:
-    ```bash
-    cd ../frontend
-    npm install
-    npm start
-    ```
-
----
-
-## Features
+**Key Features:**
 - Send emails with custom subject, body, and sender display name
-- API secured with API Key
-- Frontend form for easy email sending
-- Ready for deployment (Render, Railway, etc.)
+- Secure with API Key (set by you)
+- User-friendly web frontend for sending emails
+- Ready for local or cloud deployment (Render, Railway, etc.)
 
-## Backend (FastAPI)
-- Location: `backend/`
-- Install dependencies: `pip install -r requirements.txt`
-- Run locally: `uvicorn app.main:app --reload --host 0.0.0.0 --port 8000`
-- API docs: [http://localhost:8000/docs](http://localhost:8000/docs)
+---
 
-### Environment Variables (backend/.env)
-Create a `.env` file in the `backend/` directory with the following (example):
+## Getting Started
+
+### 1. Clone the repository
+```bash
+git clone https://github.com/yourusername/smtp-email-sender.git
+cd smtp-email-sender
+```
+
+### 2. Set up environment variables
+- Copy `.env.example` to `.env` in both `backend/` and `frontend/` (see below for details).
+
+### 3. Install dependencies and run
+
+#### Backend
+```bash
+cd backend
+pip install -r requirements.txt
+uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
+```
+
+#### Frontend
+```bash
+cd ../frontend
+npm install
+npm start
+```
+
+---
+
+## Configuration
+
+### Backend (`backend/.env`)
+Example:
 ```
 SMTP_CREDENTIALS=your_email@outlook.com:your_password_or_xxx:your_refresh_token:your_client_id
 SMTP_SERVER=smtp.office365.com
@@ -55,98 +55,44 @@ API_KEY=your_api_key_here
 - This project is configured for Microsoft 365/Outlook (smtp.office365.com) only.
 - You must use OAuth2 credentials (refresh_token, client_id) for secure authentication.
 - Do not use Gmail or other providers.
-```
 
-## Frontend (React)
-* Make sure you have Microsoft 365/Outlook credentials and have registered your app for OAuth2 to obtain refresh_token and client_id.
-- Location: `frontend/`
-- Install dependencies: `npm install`
-- Run locally: `npm start`
-
-### Environment Variables (frontend/.env)
-Create a `.env` file in the `frontend/` directory if you need to set the backend API URL:
+### Frontend (`frontend/.env`)
+Example:
 ```
 REACT_APP_API_URL=http://localhost:8000
+REACT_APP_API_KEY=your_api_key_here
 ```
-
-
-
-## API Documentation
-
-### Send Email
-- **Endpoint:** `POST /send-email/`
-- **Headers:**
-  - `Authorization: Bearer <API_KEY>`
-  - `Content-Type: application/json`
-- **Request Body:**
-  ```json
-  {
-    "display_name": "admin_snaptranslate",
-    "recipient": "user@example.com",
-    "subject": "Test",
-    "body": "Hello"
-  }
-  ```
-- **Example (curl):**
-  ```bash
-  curl -X POST http://localhost:8000/send-email/ \
-    -H "Authorization: Bearer <API_KEY>" \
-    -H "Content-Type: application/json" \
-    -d '{
-      "display_name": "admin_snaptranslate",
-      "recipient": "user@example.com",
-      "subject": "Test",
-      "body": "Hello"
-    }'
-  ```
-- **Response:**
-  - Success: `200 OK` `{ "message": "Email sent successfully" }`
-  - Error: `400`/`500` with error message
-
-### Read Emails
-- **Endpoint:** `GET /read-emails`
-- **Headers:**
-  - `Authorization: Bearer <API_KEY>`
-- **Example (curl):**
-  ```bash
-  curl -X GET http://localhost:8000/read-emails \
-    -H "Authorization: Bearer <API_KEY>"
-  ```
-- **Response:**
-  - Success: `200 OK` with JSON:
-    ```json
-    {
-      "emails": [
-        {
-          "subject": "...",
-          "from": "...",
-          "date": "...",
-          "body_text": "..."
-          // ...other fields
-        }
-      ]
-    }
-    ```
-  - Error: `401`/`500` with error message
-
-You can also explore and test the API interactively at `/docs` (Swagger UI) when the backend is running.
-
-## Deployment
-- Push your code to GitHub
-- Deploy backend to Render, Railway, or similar (free tier available)
-- Set environment variables for credentials and API key
-- Share your public API URL and API key with trusted users
-
-### Example Free Deployment (Render)
-1. Create a new Web Service on [Render](https://render.com/)
-2. Connect your GitHub repo
-3. Set build/run command: `uvicorn app.main:app --host 0.0.0.0 --port 10000`
-4. Add environment variables in Render dashboard
-5. Deploy and get your public API URL
 
 ---
 
+## Usage
 
- 
+1. Open the frontend in your browser (usually [http://localhost:3000](http://localhost:3000))
+2. Fill in the email form: sender, recipient, subject, body, and (optionally) attachments
+3. Click "Send" to send your email via your configured Microsoft 365/Outlook account
+4. If there are errors (quota, spam, etc.), you will see a clear error message in the UI
+
+---
+
+## Deployment
+
+You can deploy this project to Render, Railway, or any cloud provider that supports Python and Node.js.
+
+**Basic steps:**
+1. Push your code to GitHub
+2. Deploy backend to your cloud provider (set environment variables in the dashboard)
+3. Deploy frontend as a static site (e.g., Render Static Site, Vercel, Netlify)
+4. Set the frontend API URL to point to your backend
+
+---
+
+## Documentation & Support
+
+- The backend provides interactive API docs at `/docs` (Swagger UI) when running locally
+- For advanced configuration, see comments in the codebase
+- For issues, open an issue on GitHub
+
+---
+
 ## License
 MIT
