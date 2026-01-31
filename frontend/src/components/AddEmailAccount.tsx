@@ -1,5 +1,6 @@
 
 import React, { useState } from 'react';
+import { saveAccounts } from '../utils/crypto';
 
 
 interface AddEmailAccountProps {
@@ -10,6 +11,13 @@ interface AddEmailAccountProps {
 const AddEmailAccount: React.FC<AddEmailAccountProps> = ({ onAdd, accounts = [] }) => {
   const [cred, setCred] = useState('');
   const [error, setError] = useState<string | null>(null);
+
+  React.useEffect(() => {
+    if (error) {
+      const timer = setTimeout(() => setError(null), 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [error]);
 
   function validate() {
     const sep = cred.includes('|') ? '|' : cred.includes(':') ? ':' : '|';
@@ -29,8 +37,10 @@ const AddEmailAccount: React.FC<AddEmailAccountProps> = ({ onAdd, accounts = [] 
     const err = validate();
     if (err) return setError(err);
     setError(null);
-    // Always store as string, let backend parse
-    onAdd(cred);
+    // Save to encrypted storage for immediate effect
+    const updated = [...accounts, cred];
+    saveAccounts(updated);
+    onAdd(cred); // still call parent for state update
     setCred('');
   }
 

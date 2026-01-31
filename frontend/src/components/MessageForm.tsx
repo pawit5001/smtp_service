@@ -1,17 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { toast } from 'react-toastify';
 
 
 const MessageForm: React.FC = () => {
-    function handleClearLocalStorage() {
-        if (window.confirm('คุณแน่ใจหรือไม่ว่าต้องการล้างข้อมูลทั้งหมดใน localStorage? (รวมถึงบัญชีที่เลือก, ฟอร์ม, ฯลฯ)')) {
-            localStorage.removeItem('messageform_selected_account_idx');
-            localStorage.removeItem('readmail_selected_account_idx');
-            localStorage.removeItem('message_form_cache');
-            localStorage.removeItem('accounts');
-            window.location.href = "/";
-        }
-    }
         // Multi-account selection (load from local storage or crypto utils)
         // Preload default accounts (CREDS_SMTP, CREDS_GRAPH_API) if not present
         const DEFAULT_ACCOUNTS = [
@@ -56,41 +47,42 @@ const MessageForm: React.FC = () => {
                 });
             }
         });
-        // Persist selected account index in localStorage
-        const ACCOUNT_IDX_KEY = 'messageform_selected_account_idx';
-        const getDefaultAccountIdx = (accounts: string[]) => {
-            const saved = localStorage.getItem(ACCOUNT_IDX_KEY);
-            if (saved && !isNaN(Number(saved)) && accounts[Number(saved)]) return Number(saved);
-            return Math.max(0, accounts.findIndex((acc: string) => acc.split(/[|:]/)[0] === "scavelli20322@outlook.com"));
-        };
-        const [selectedAccountIdx, setSelectedAccountIdx] = useState(() => getDefaultAccountIdx(
-            (() => {
-                try {
-                    const { loadAccounts } = require('../utils/crypto');
-                    let loaded = loadAccounts();
-                    DEFAULT_ACCOUNTS.forEach(def => {
-                        const defEmail = def.split(/[|:]/)[0];
-                        if (!loaded.some((acc: string) => acc.split(/[|:]/)[0] === defEmail)) {
-                            loaded.push(def);
-                        }
-                    });
-                    return loaded;
-                } catch {
-                    return [...DEFAULT_ACCOUNTS];
-                }
-            })()
-        ));
-        // Save to localStorage when changed
-        React.useEffect(() => {
-            localStorage.setItem(ACCOUNT_IDX_KEY, String(selectedAccountIdx));
-        }, [selectedAccountIdx]);
-        let activeEmail = 'xvrifkhiss3889@hotmail.com';
-        let isDefault = true;
-        if (accounts.length > 0 && accounts[selectedAccountIdx]) {
-            const sep = accounts[selectedAccountIdx].includes('|') ? '|' : accounts[selectedAccountIdx].includes(':') ? ':' : '|';
-            activeEmail = accounts[selectedAccountIdx].split(sep)[0];
-            isDefault = false;
-        }
+    // ...existing code...
+    // Persist selected account index in localStorage
+    const ACCOUNT_IDX_KEY = 'messageform_selected_account_idx';
+    const getDefaultAccountIdx = (accounts: string[]) => {
+        const saved = localStorage.getItem(ACCOUNT_IDX_KEY);
+        if (saved && !isNaN(Number(saved)) && accounts[Number(saved)]) return Number(saved);
+        return Math.max(0, accounts.findIndex((acc: string) => acc.split(/[|:]/)[0] === "scavelli20322@outlook.com"));
+    };
+    const [selectedAccountIdx, setSelectedAccountIdx] = useState(() => getDefaultAccountIdx(
+        (() => {
+            try {
+                const { loadAccounts } = require('../utils/crypto');
+                let loaded = loadAccounts();
+                DEFAULT_ACCOUNTS.forEach(def => {
+                    const defEmail = def.split(/[|:]/)[0];
+                    if (!loaded.some((acc: string) => acc.split(/[|:]/)[0] === defEmail)) {
+                        loaded.push(def);
+                    }
+                });
+                return loaded;
+            } catch {
+                return [...DEFAULT_ACCOUNTS];
+            }
+        })()
+    ));
+    // Save to localStorage when changed
+    React.useEffect(() => {
+        localStorage.setItem(ACCOUNT_IDX_KEY, String(selectedAccountIdx));
+    }, [selectedAccountIdx]);
+    let activeEmail = 'xvrifkhiss3889@hotmail.com';
+    let isDefault = true;
+    if (accounts.length > 0 && accounts[selectedAccountIdx]) {
+        const sep = accounts[selectedAccountIdx].includes('|') ? '|' : accounts[selectedAccountIdx].includes(':') ? ':' : '|';
+        activeEmail = accounts[selectedAccountIdx].split(sep)[0];
+        isDefault = false;
+    }
     // Cache/load form values from localStorage
     const LS_KEY = 'message_form_cache';
     const getCache = () => {
@@ -107,20 +99,19 @@ const MessageForm: React.FC = () => {
     const [displayName, setDisplayName] = useState(cache.displayName || 'admin_snaptranslate');
     const [sendMethod, setSendMethod] = useState<'graphapi' | 'smtp'>(cache.sendMethod || 'graphapi');
     const [files, setFiles] = useState<FileList | null>(null);
+    const fileInputRef = useRef<HTMLInputElement | null>(null);
     // Update localStorage every time form changes
     React.useEffect(() => {
         localStorage.setItem(LS_KEY, JSON.stringify({ recipient, cc, subject, body, displayName, sendMethod }));
     }, [recipient, cc, subject, body, displayName, sendMethod]);
     // Show warning if Graph API is selected
     const isGraphApi = sendMethod === 'graphapi';
-
     // Email validation and splitting helpers
     const validateEmail = (email: string) => {
         return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
     };
     const getRecipientList = (): string[] => recipient.split(',').map((e: string) => e.trim()).filter(Boolean);
     const getCcList = (): string[] => cc.split(',').map((e: string) => e.trim()).filter(Boolean);
-
     // Handle form submit: validate, build FormData, send to backend
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -137,7 +128,7 @@ const MessageForm: React.FC = () => {
         }
         setLoading(true);
         try {
-            // Support both .env, localhost, and 127.0.0.1 for API URL
+            // ...existing code...
             let apiUrl = process.env.REACT_APP_API_URL || '';
             if (!apiUrl) {
                 if (window.location.hostname === '127.0.0.1') {
@@ -189,6 +180,7 @@ const MessageForm: React.FC = () => {
                     setSubject('');
                     setBody('');
                     setFiles(null);
+                    if (fileInputRef.current) fileInputRef.current.value = '';
                     // Clear form cache after success
                     localStorage.removeItem(LS_KEY);
                 }
@@ -196,7 +188,7 @@ const MessageForm: React.FC = () => {
                     toast.error(`ส่งอีเมลไม่สำเร็จ ${failCount} รายการ: ${failList.join(', ')}`);
                 }
             } else {
-                // Special handling for Microsoft OAuth2/Graph API invalid_grant error
+                // ...existing code...
                 if (data && data.detail && typeof data.detail === 'string' && data.detail.includes('invalid_grant')) {
                     toast.error('Token หมดอายุหรือสิทธิ์ไม่ถูกต้อง กรุณาเพิ่มบัญชีใหม่หรือ authorize ใหม่ใน Microsoft Azure Portal');
                 } else if (data && data.detail && typeof data.detail === 'string' && data.detail.includes('AADSTS70000')) {
@@ -210,153 +202,151 @@ const MessageForm: React.FC = () => {
         }
         setLoading(false);
     };
-
     return (
         <React.Fragment>
-            <div className="mb-4 flex justify-end max-w-xl mx-auto">
-                <button
-                    onClick={handleClearLocalStorage}
-                    className="px-4 py-2 bg-yellow-100 dark:bg-yellow-800 text-yellow-700 dark:text-yellow-200 rounded border border-yellow-300 dark:border-yellow-700 text-sm font-semibold hover:bg-yellow-200 dark:hover:bg-yellow-700 transition-colors"
-                >
-                    ล้างข้อมูล LocalStorage ทั้งหมด
-                </button>
-            </div>
-            <form className="max-w-xl mx-auto bg-white dark:bg-gray-900 rounded-xl shadow-md p-6 flex flex-col gap-4" onSubmit={handleSubmit}>
-            <div className="mb-2">
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">ส่งจากบัญชี</label>
-                <div className="flex items-center gap-2">
-                    <span className="text-gray-800 dark:text-gray-100 font-semibold">
-                        {activeEmail}
-                        {["scavelli20322@outlook.com", "xvrifkhiss3889@hotmail.com"].includes(activeEmail) && (
-                            <span className="text-blue-500 font-normal text-xs ml-1">(ค่าเริ่มต้น)</span>
-                        )}
-                    </span>
+            <form
+                className="w-full max-w-2xl mx-auto bg-white dark:bg-gray-900 rounded-xl shadow-md p-4 sm:p-6 flex flex-col gap-4 md:gap-6 lg:gap-8"
+                onSubmit={handleSubmit}
+            >
+                <div className="mb-2">
+                    <label className="block text-sm md:text-base font-medium text-gray-700 dark:text-gray-200 mb-1">ส่งจากบัญชี</label>
+                    <div className="flex flex-col sm:flex-row sm:items-center gap-2">
+                        <span className="text-gray-800 dark:text-gray-100 font-semibold text-sm md:text-base">
+                            {activeEmail}
+                            {[
+                                "scavelli20322@outlook.com",
+                                "xvrifkhiss3889@hotmail.com"
+                            ].includes(activeEmail) && (
+                                <span className="text-blue-500 font-normal text-xs ml-1">(ค่าเริ่มต้น)</span>
+                            )}
+                        </span>
+                        <select
+                            className="sm:ml-2 border rounded px-2 py-1 text-sm md:text-base bg-white dark:bg-gray-800 dark:text-gray-100 border-gray-300 dark:border-gray-700 w-full sm:w-auto"
+                            value={selectedAccountIdx}
+                            onChange={e => setSelectedAccountIdx(Number(e.target.value))}
+                            title="เลือกบัญชีอีเมลที่ต้องการส่ง"
+                        >
+                            {accounts.map((acc, i) => {
+                                const sep = acc.includes('|') ? '|' : acc.includes(':') ? ':' : '|';
+                                const email = acc.split(sep)[0];
+                                const isDef = ["scavelli20322@outlook.com", "xvrifkhiss3889@hotmail.com"].includes(email);
+                                return <option value={i} key={i}>{email}{isDef ? ' (ค่าเริ่มต้น)' : ''}</option>;
+                            })}
+                        </select>
+                    </div>
+                </div>
+                <div>
+                    <label className="block text-sm md:text-base font-medium text-gray-700 dark:text-gray-200 mb-1">ชื่อผู้ส่ง (Display Name) <span className="text-gray-400 dark:text-gray-500">(ไม่บังคับ)</span></label>
+                    <input
+                        type="text"
+                        className="w-full border rounded px-3 py-2 text-sm md:text-base bg-white dark:bg-gray-800 dark:text-gray-100 border-gray-300 dark:border-gray-700"
+                        value={displayName}
+                        onChange={e => setDisplayName(e.target.value)}
+                        placeholder="ชื่อที่จะแสดงในอีเมลผู้รับ"
+                        title="ชื่อที่จะแสดงในอีเมลผู้รับ"
+                        disabled={isGraphApi}
+                    />
+                    {isGraphApi && (
+                        <div className="text-xs text-yellow-600 mt-1">* Microsoft Graph API ไม่รองรับการเปลี่ยน Display Name (จะใช้ชื่อบัญชี Microsoft เท่านั้น)</div>
+                    )}
+                </div>
+                <div>
+                    <label className="block text-sm md:text-base font-medium text-gray-700 dark:text-gray-200 mb-1">อีเมลผู้รับ <span className="text-red-500">*</span></label>
+                    <input
+                        type="text"
+                        className="w-full border rounded px-3 py-2 text-sm md:text-base bg-white dark:bg-gray-800 dark:text-gray-100 border-gray-300 dark:border-gray-700"
+                        value={recipient}
+                        onChange={e => setRecipient(e.target.value)}
+                        placeholder="ex: a@email.com, b@email.com, c@email.com"
+                        title="กรอกอีเมลผู้รับหลายคนคั่นด้วย , (comma)"
+                        required
+                    />
+                    <div className="text-xs md:text-sm text-gray-500 mt-1">
+                        * ส่งอีเมลถึงผู้รับหลายคนคั่นด้วย , (comma)
+                        <div className="mt-1 px-2 py-1 bg-yellow-50 border border-yellow-300 rounded text-yellow-700">
+                            <span className="font-semibold">ตัวอย่าง:</span> a@email.com, b@email.com, c@email.com
+                        </div>
+                    </div>
+                </div>
+                <div>
+                    <label className="block text-sm md:text-base font-medium text-gray-700 dark:text-gray-200 mb-1">CC (สำเนาถึง) <span className="text-gray-400 dark:text-gray-500">(ไม่บังคับ)</span></label>
+                    <input
+                        type="text"
+                        className="w-full border rounded px-3 py-2 text-sm md:text-base bg-white dark:bg-gray-800 dark:text-gray-100 border-gray-300 dark:border-gray-700"
+                        value={cc}
+                        onChange={e => setCc(e.target.value)}
+                        placeholder="ex: cc1@email.com, cc2@email.com"
+                        title="กรอกอีเมล CC หลายคนคั่นด้วย , (comma)"
+                    />
+                    <div className="text-xs md:text-sm text-gray-500 mt-1">
+                        * ส่งสำเนาถึงหลายคนคั่นด้วย , (comma)
+                        <div className="mt-1 px-2 py-1 bg-yellow-50 border border-yellow-300 rounded text-yellow-700">
+                            <span className="font-semibold">ตัวอย่าง:</span> cc1@email.com, cc2@email.com
+                        </div>
+                    </div>
+                </div>
+                <div>
+                    <label className="block text-sm md:text-base font-medium text-gray-700 dark:text-gray-200 mb-1">หัวข้อ <span className="text-red-500">*</span></label>
+                    <input
+                        type="text"
+                        className="w-full border rounded px-3 py-2 text-sm md:text-base bg-white dark:bg-gray-800 dark:text-gray-100 border-gray-300 dark:border-gray-700"
+                        value={subject}
+                        onChange={e => setSubject(e.target.value)}
+                        placeholder="หัวข้ออีเมล"
+                        title="หัวข้ออีเมล"
+                        required
+                    />
+                </div>
+                <div>
+                    <label className="block text-sm md:text-base font-medium text-gray-700 dark:text-gray-200 mb-1">เนื้อหา <span className="text-red-500">*</span></label>
+                    <textarea
+                        className="w-full border rounded px-3 py-2 text-sm md:text-base min-h-[120px] bg-white dark:bg-gray-800 dark:text-gray-100 border-gray-300 dark:border-gray-700"
+                        value={body}
+                        onChange={e => setBody(e.target.value)}
+                        placeholder="พิมพ์ข้อความ..."
+                        title="เนื้อหาอีเมล"
+                        required
+                    />
+                </div>
+                <div>
+                    <label className="block text-sm md:text-base font-medium text-gray-700 dark:text-gray-200 mb-1">แนบไฟล์ (ถ้ามี) <span className="text-gray-400 dark:text-gray-500">(ไม่บังคับ)</span></label>
+                    <input
+                        type="file"
+                        className="w-full border rounded px-3 py-2 text-sm md:text-base bg-white dark:bg-gray-800 dark:text-gray-100 border-gray-300 dark:border-gray-700"
+                        multiple
+                        onChange={e => setFiles(e.target.files)}
+                        title="เลือกไฟล์แนบ"
+                        ref={fileInputRef}
+                    />
+                </div>
+                <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
+                    <label className="font-medium dark:text-gray-200 text-sm md:text-base" htmlFor="send-method-select">วิธีส่ง:</label>
                     <select
-                        className="ml-2 border rounded px-2 py-1 text-sm bg-white dark:bg-gray-800 dark:text-gray-100 border-gray-300 dark:border-gray-700"
-                        value={selectedAccountIdx}
-                        onChange={e => setSelectedAccountIdx(Number(e.target.value))}
-                        title="เลือกบัญชีอีเมลที่ต้องการส่ง"
+                        id="send-method-select"
+                        className="border rounded px-2 py-1 text-sm md:text-base bg-white dark:bg-gray-800 dark:text-gray-100 border-gray-300 dark:border-gray-700 w-full sm:w-auto"
+                        value={sendMethod}
+                        onChange={e => setSendMethod(e.target.value as 'graphapi' | 'smtp')}
+                        title="เลือกวิธีการส่งอีเมล"
                     >
-                        {accounts.map((acc, i) => {
-                            const sep = acc.includes('|') ? '|' : acc.includes(':') ? ':' : '|';
-                            const email = acc.split(sep)[0];
-                            const isDef = ["scavelli20322@outlook.com", "xvrifkhiss3889@hotmail.com"].includes(email);
-                            return <option value={i} key={i}>{email}{isDef ? ' (ค่าเริ่มต้น)' : ''}</option>;
-                        })}
+                        <option value="graphapi">Microsoft Graph API</option>
+                        <option value="smtp">SMTP</option>
                     </select>
                 </div>
-            </div>
-            <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">ชื่อผู้ส่ง (Display Name) <span className="text-gray-400 dark:text-gray-500">(ไม่บังคับ)</span></label>
-                <input
-                    type="text"
-                    className="w-full border rounded px-3 py-2 text-sm bg-white dark:bg-gray-800 dark:text-gray-100 border-gray-300 dark:border-gray-700"
-                    value={displayName}
-                    onChange={e => setDisplayName(e.target.value)}
-                    placeholder="ชื่อที่จะแสดงในอีเมลผู้รับ"
-                    title="ชื่อที่จะแสดงในอีเมลผู้รับ"
-                    disabled={isGraphApi}
-                />
-                {isGraphApi && (
-                    <div className="text-xs text-yellow-600 mt-1">* Microsoft Graph API ไม่รองรับการเปลี่ยน Display Name (จะใช้ชื่อบัญชี Microsoft เท่านั้น)</div>
-                )}
-            </div>
-            <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">อีเมลผู้รับ <span className="text-red-500">*</span></label>
-                <input
-                    type="text"
-                    className="w-full border rounded px-3 py-2 text-sm bg-white dark:bg-gray-800 dark:text-gray-100 border-gray-300 dark:border-gray-700"
-                    value={recipient}
-                    onChange={e => setRecipient(e.target.value)}
-                    placeholder="ex: a@email.com, b@email.com, c@email.com"
-                    title="กรอกอีเมลผู้รับหลายคนคั่นด้วย , (comma)"
-                    required
-                />
-                <div className="text-xs text-gray-500 mt-1">
-                    * ส่งอีเมลถึงผู้รับหลายคนคั่นด้วย , (comma)
-                    <div className="mt-1 px-2 py-1 bg-yellow-50 border border-yellow-300 rounded text-yellow-700">
-                        <span className="font-semibold">ตัวอย่าง:</span> a@email.com, b@email.com, c@email.com
-                    </div>
-                </div>
-            </div>
-            <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">CC (สำเนาถึง) <span className="text-gray-400 dark:text-gray-500">(ไม่บังคับ)</span></label>
-                <input
-                    type="text"
-                    className="w-full border rounded px-3 py-2 text-sm bg-white dark:bg-gray-800 dark:text-gray-100 border-gray-300 dark:border-gray-700"
-                    value={cc}
-                    onChange={e => setCc(e.target.value)}
-                    placeholder="ex: cc1@email.com, cc2@email.com"
-                    title="กรอกอีเมล CC หลายคนคั่นด้วย , (comma)"
-                />
-                <div className="text-xs text-gray-500 mt-1">
-                    * ส่งสำเนาถึงหลายคนคั่นด้วย , (comma)
-                    <div className="mt-1 px-2 py-1 bg-yellow-50 border border-yellow-300 rounded text-yellow-700">
-                        <span className="font-semibold">ตัวอย่าง:</span> cc1@email.com, cc2@email.com
-                    </div>
-                </div>
-            </div>
-            <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">หัวข้อ <span className="text-red-500">*</span></label>
-                <input
-                    type="text"
-                    className="w-full border rounded px-3 py-2 text-sm bg-white dark:bg-gray-800 dark:text-gray-100 border-gray-300 dark:border-gray-700"
-                    value={subject}
-                    onChange={e => setSubject(e.target.value)}
-                    placeholder="หัวข้ออีเมล"
-                    title="หัวข้ออีเมล"
-                    required
-                />
-            </div>
-            <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">เนื้อหา <span className="text-red-500">*</span></label>
-                <textarea
-                    className="w-full border rounded px-3 py-2 text-sm min-h-[120px] bg-white dark:bg-gray-800 dark:text-gray-100 border-gray-300 dark:border-gray-700"
-                    value={body}
-                    onChange={e => setBody(e.target.value)}
-                    placeholder="พิมพ์ข้อความ..."
-                    title="เนื้อหาอีเมล"
-                    required
-                />
-            </div>
-            <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">แนบไฟล์ (ถ้ามี) <span className="text-gray-400 dark:text-gray-500">(ไม่บังคับ)</span></label>
-                <input
-                    type="file"
-                    className="w-full border rounded px-3 py-2 text-sm bg-white dark:bg-gray-800 dark:text-gray-100 border-gray-300 dark:border-gray-700"
-                    multiple
-                    onChange={e => setFiles(e.target.files)}
-                    title="เลือกไฟล์แนบ"
-                />
-            </div>
-            <div className="flex items-center gap-4">
-                <label className="font-medium dark:text-gray-200" htmlFor="send-method-select">วิธีส่ง:</label>
-                <select
-                    id="send-method-select"
-                    className="border rounded px-2 py-1 text-sm bg-white dark:bg-gray-800 dark:text-gray-100 border-gray-300 dark:border-gray-700"
-                    value={sendMethod}
-                    onChange={e => setSendMethod(e.target.value as 'graphapi' | 'smtp')}
-                    title="เลือกวิธีการส่งอีเมล"
+                <button
+                    type="submit"
+                    className="bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 px-4 md:px-6 rounded shadow disabled:opacity-50 flex items-center justify-center gap-2 text-base md:text-lg"
+                    disabled={loading}
                 >
-                    <option value="graphapi">Microsoft Graph API</option>
-                    <option value="smtp">SMTP</option>
-                </select>
-            </div>
-            <button
-                type="submit"
-                className="bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 px-6 rounded shadow disabled:opacity-50 flex items-center justify-center gap-2"
-                disabled={loading}
-            >
-                {loading && (
-                    <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
-                    </svg>
-                )}
-                {loading ? 'กำลังส่ง...' : 'ส่งอีเมล'}
-            </button>
-        </form>
-    </React.Fragment>
+                    {loading && (
+                        <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
+                        </svg>
+                    )}
+                    {loading ? 'กำลังส่ง...' : 'ส่งอีเมล'}
+                </button>
+            </form>
+        </React.Fragment>
     );
 }
 
