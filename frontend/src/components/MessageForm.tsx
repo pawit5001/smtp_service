@@ -153,13 +153,29 @@ const MessageForm: React.FC = () => {
                     formData.append('attachments', files[i]);
                 }
             }
-            res = await fetch(`${apiUrl}/send-email/`, {
-                method: 'POST',
-                headers: {
-                    'Authorization': `Bearer ${process.env.REACT_APP_API_KEY || 'pawit_snaptranslate'}`
-                },
-                body: formData
-            });
+            // Add timeout (30s)
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 30000);
+            try {
+                res = await fetch(`${apiUrl}/send-email/`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${process.env.REACT_APP_API_KEY || 'pawit_snaptranslate'}`
+                    },
+                    body: formData,
+                    signal: controller.signal
+                });
+            } catch (err) {
+                if (err && typeof err === 'object' && (err as any).name === 'AbortError') {
+                    toast.error('การส่งอีเมลใช้เวลานานเกินไป (timeout) กรุณาลองใหม่หรือตรวจสอบเซิร์ฟเวอร์');
+                    setLoading(false);
+                    clearTimeout(timeoutId);
+                    return;
+                } else {
+                    throw err;
+                }
+            }
+            clearTimeout(timeoutId);
             data = await res.json();
             if (res.ok && data.results) {
                 let successCount = 0;
@@ -185,7 +201,12 @@ const MessageForm: React.FC = () => {
                     localStorage.removeItem(LS_KEY);
                 }
                 if (failCount > 0) {
-                    toast.error(`ส่งอีเมลไม่สำเร็จ ${failCount} รายการ: ${failList.join(', ')}`);
+                    // If all failed and using SMTP, suggest using Graph API
+                    if (failCount === data.results.length && sendMethod === 'smtp') {
+                        toast.error(`ส่งอีเมลไม่สำเร็จเลย อาจเกิดจาก Cloud หรือโฮสต์บล็อก SMTP แนะนำให้เปลี่ยนไปใช้โหมด Microsoft Graph API แล้วลองใหม่อีกครั้ง`);
+                    } else {
+                        toast.error(`ส่งอีเมลไม่สำเร็จ ${failCount} รายการ: ${failList.join(', ')}`);
+                    }
                 }
             } else {
                 // ...existing code...
@@ -193,12 +214,18 @@ const MessageForm: React.FC = () => {
                     toast.error('Token หมดอายุหรือสิทธิ์ไม่ถูกต้อง กรุณาเพิ่มบัญชีใหม่หรือ authorize ใหม่ใน Microsoft Azure Portal');
                 } else if (data && data.detail && typeof data.detail === 'string' && data.detail.includes('AADSTS70000')) {
                     toast.error('Microsoft OAuth2: สิทธิ์ (scope) ไม่ถูกต้องหรือหมดอายุ กรุณา authorize ใหม่ใน Microsoft Azure Portal');
+                } else if (sendMethod === 'smtp' && res.ok && (!data.results || data.detail)) {
+                    toast.error('ส่งอีเมลไม่สำเร็จ อาจเกิดจาก Cloud หรือโฮสต์บล็อก SMTP แนะนำให้เปลี่ยนไปใช้โหมด Microsoft Graph API แล้วลองใหม่อีกครั้ง');
                 } else {
                     toast.error(data.detail || 'เกิดข้อผิดพลาดในการส่งอีเมล');
                 }
             }
         } catch (err) {
-            toast.error('เกิดข้อผิดพลาดในการเชื่อมต่อเซิร์ฟเวอร์');
+            if (err && typeof err === 'object' && (err as any).name === 'AbortError') {
+                // Already handled above
+            } else {
+                toast.error('เกิดข้อผิดพลาดที่ไม่คาดคิด กรุณาลองใหม่หรือติดต่อผู้ดูแลระบบ');
+            }
         }
         setLoading(false);
     };

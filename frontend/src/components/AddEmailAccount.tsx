@@ -22,7 +22,7 @@ const AddEmailAccount: React.FC<AddEmailAccountProps> = ({ onAdd, accounts = [] 
   function validate() {
     const sep = cred.includes('|') ? '|' : cred.includes(':') ? ':' : '|';
     const parts = cred.split(sep);
-    if (parts.length < 4 || parts.length > 5) return 'รูปแบบต้องเป็น email|password|refresh_token|client_id หรือ email|password|refresh_token|client_id|client_secret (ใช้ | หรือ : ก็ได้)';
+    if (parts.length < 4 || parts.length > 5) return 'รูปแบบต้องเป็น email|password|refresh_token|client_id หรือ email|password|refresh_token|client_id|client_secret (ใช้ | หรือ : เท่านั้น)';
     if (!parts[0].match(/^\S+@\S+\.\S+$/)) return 'กรุณากรอกอีเมลให้ถูกต้อง';
     // Duplicate email validation
     if (accounts.some((a) => {
